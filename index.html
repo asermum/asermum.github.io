@@ -68,7 +68,7 @@
                .then(response => response.json())
                .then(data => { console.log(data)
                    const ip = data.ip;
-                   ipReady(data)
+                    document.getElementById("ip").innerText = "L'ip è : " + ip 
                  })
    .catch(error => console.error(error))
                   });
