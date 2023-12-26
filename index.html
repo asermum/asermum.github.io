@@ -59,7 +59,7 @@
     
 fetch(url)
    .then(response => {
-      if (!response.ok) {
+      if (!response.ok) {console.log("errore ip1)
          throw new Error('Errore nella risposta della richiesta IP 1');
       }
       return response.json();
@@ -83,7 +83,7 @@ fetch(url)
             document.getElementById("ip").innerText = "L'ip è: " + ip;
          })
          .catch(error => {
-            console.error('Errore durante la richiesta IP:', error);
+            console.error('Errore durante la richiesta IP2:', error);
          });
    });
 
