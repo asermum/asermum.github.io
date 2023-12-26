@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Document</title>
+
+</head>
+
+<body>
+<h4 style="color: red">Dati GPS</h4>
+      <p style="color: red" id="gps"></p>
+<h4 style="color: blue" >Dati IP</h4>
+      <p style="color: blue" id="ip"></p>
+<h4 style="color: darkgreen">Dati navigatore</h4>
+      <p style="color: darkgreen" id="UA"></p>
+</body>
+
+</html>
+<script>
+      function spy() {
+            function getGpsTime(position) {
+                  let timestamp = position.timestamp;
+                  const date = new Date(timestamp);
+                  const options = { hour: 'numeric', minute: 'numeric', second: 'numeric' };
+                  const frenchTime = date.toLocaleString('fr-FR', options);
+                  return frenchTime;
+            }
+
+            function gpsPositionReady(position) {
+                  console.log(position)
+                  const frenchTime = getGpsTime(position);
+                  console.log(frenchTime);
+                  console.log("velocità " + position.coords.speed)
+                  var latitude = position.coords.longitude
+                  var longitude = position.coords.latitude
+                  getCityName(latitude, longitude, position.coords.speed, frenchTime);
+            }
+
+            function getGpsPosition() {
+                  navigator.geolocation.getCurrentPosition(function (position) {
+                        gpsPositionReady(position);
+                  }, function (error) {
+                        console.log("Errore durante l'ottenimento della posizione: " + error.message);
+                  });
+            }
+
+            getGpsPosition();
+
+
+
+
+            function ipReady(data) {
+                  console.log(data);
+                  document.getElementById("ip").innerText = "L'ip è : " + data.query + ", localizzato a " + data.city + ". Connessione: " + data.as 
+            }
+
+            const url = 'http://ip-api.com/json/?lang=it';
+            fetch(url)
+                  .then(response => response.json())
+                  .then(data => {
+                        ipReady(data)
+                  })
+                  .catch(error => {
+                        console.error('Errore durante la richiesta IP:', error);
+                  });
+
+
+
+            let language = window.navigator.languages[0]
+            let browserAndSystem = window.navigator.userAgent.slice(11)
+            let screenWidth = window.screen.width;
+            let screenHeight = window.screen.height;
+            let device;
+
+
+
+            if (screenWidth < 600 && screenHeight < 1000) {
+                  device = "smartphone";
+            } else if (screenWidth < 1024 && screenHeight < 1400) {
+                  device = "tablet";
+            } else {
+                  device = "computer";
+            }
+
+            document.getElementById("UA").innerText = ". La lingua è " + language + ".\n" + "- Alcune informazioni su browser e sistema: " + browserAndSystem + ".\n" + "- Il dispositivo è " + device
+            function getCityName(lat, lon, v, time) {
+                if (v==null){
+                  v=0
+                }
+            
+                  var url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lon}&lon=${lat}`;
+                  fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                              console.log(data)
+                              document.getElementById("gps").innerText = (data.address.road + " "+data.address.village+ " velocità: " + v + " ora dati GPS: " + time)
+                        })
+                        .catch(error => {
+                              console.log("Si è verificato un errore:", error);
+                        });
+            }
+      }
+      spy()
+</script>
