@@ -48,7 +48,13 @@
 
             getGpsPosition();
 
-
+fetch('https://api.ipify.org?format=json')
+   .then(response => response.json())
+   .then(data => { console.log(data)
+       const ip = data.ip;
+       document.getElementById('ip-address').textContent = ip;
+     })
+   .catch(error => console.error(error))
 
 
             function ipReady(data) {
