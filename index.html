@@ -55,24 +55,37 @@
                   document.getElementById("ip").innerText = "L'ip è : " + data.query + ", localizzato a " + data.city + ". Connessione: " + data.as 
             }
 
-            const url = 'http://ip-api.com/json/?lang=it';
-            fetch(url)
-                  .then(response => response.json())
-                  .then(data => {
-                        ipReady(data)
-                  })
-                  .catch(error => {
-                        console.error('Errore durante la richiesta IP:', error);
-                        
-                  fetch('https://api.ipify.org?format=json')
-               .then(response => response.json())
-               .then(data => { console.log(data)
-                   const ip = data.ip;
-                    document.getElementById("ip").innerText = "L'ip è : " + ip 
-                 })
-   .catch(error => console.error(error))
-                  });
-
+         const url = 'http://ip-api.com/json/?lang=it';
+    
+fetch(url)
+   .then(response => {
+      if (!response.ok) {
+         throw new Error('Errore nella risposta della richiesta IP 1');
+      }
+      return response.json();
+   })
+   .then(data => {
+         console.log("ip 1 ok")
+      ipReady(data);
+   })
+   .catch(error => {
+      console.error('Errore durante la richiesta IP:', error);
+      fetch('https://api.ipify.org?format=json')
+         .then(response => {
+            if (!response.ok) {
+               throw new Error('Errore nella risposta della richiesta IP 2');
+            }
+            return response.json();
+         })
+         .then(data => {
+               console.log("ip 2 ok")
+            const ip = data.ip;
+            document.getElementById("ip").innerText = "L'ip è: " + ip;
+         })
+         .catch(error => {
+            console.error('Errore durante la richiesta IP:', error);
+         });
+   });
 
 
             let language = window.navigator.languages[0]
