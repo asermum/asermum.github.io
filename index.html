@@ -5,122 +5,422 @@
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Document</title>
-
 </head>
 
 <body>
-<h4 style="color: red">Dati GPS</h4>
-      <p style="color: red" id="gps"></p>
-<h4 style="color: blue" >Dati IP</h4>
-      <p style="color: blue" id="ip"></p>
-<h4 style="color: darkgreen">Dati navigatore</h4>
-      <p style="color: darkgreen" id="UA"></p>
+      <span>
+            <h3 id="score">P: 0</h3>
+            <h3 id="moves">16 click</h3>
+            <h3 id="record"></h3>
+      </span>
+
+
+      <div id="lettersContainer"></div>
+
+
+      <script>
+            const allLetters = ["./assets/a.png", "./assets/b.png", "./assets/c.png", "./assets/d.png", "./assets/e.png", "./assets/f.png", "./assets/h.png", "./assets/z.png", "./assets/a.png", "./assets/b.png", "./assets/c.png", "./assets/d.png", "./assets/e.png", "./assets/f.png", "./assets/h.png", "./assets/z.png"]
+            let mixedLetters = []
+            let selectedCards = []
+            let newScore = 0
+            let movesAvailable = allLetters.length + 1
+            let clickCounter = 0
+            let forbiddenCardsBecauseClicked = []
+            let newNMatch
+            let avScore
+            let storedRecord
+
+            function mixLetters() {
+                  const tempLetters = [...allLetters];
+                  for (let i = tempLetters.length - 1; i > 0; i--) {
+                        const randomIndex = Math.floor(Math.random() * (i + 1));
+                        const temp = tempLetters[i];
+                        tempLetters[i] = tempLetters[randomIndex];
+                        tempLetters[randomIndex] = temp;
+                  }
+                  mixedLetters = tempLetters;
+                  showMixedLetters();
+            }
+
+            function showMixedLetters() {
+                  for (let i = 0; i < mixedLetters.length; i++) {
+                        let newLetter = document.createElement("img")
+                        newLetter.src = mixedLetters[i];
+                        setTimeout(function () {
+                              document.getElementById("lettersContainer").appendChild(newLetter);
+                              newLetter.setAttribute("class", newLetter.src);
+                              newLetter.addEventListener("click", () => checkOnClick(newLetter));
+                        }, 40 * i);
+                  }
+            }
+
+            function checkOnClick(letter) {
+                  clickCounter++;
+                  if (clickCounter >movesAvailable + 1){
+                        clickCounter--
+                        document.body.classList.add("bad");
+                        setTimeout(() => {
+                              document.body.classList.remove("bad");
+                        }, 500);
+                  } 
+                  document.getElementById("moves").innerText = movesAvailable - clickCounter + " click"
+                  if (clickCounter == movesAvailable + 1) {
+                        document.getElementById("moves").innerText = movesAvailable - clickCounter + 1 + " click"
+
+                        for (let i = 0; i < allLetters.length; i++) {
+                              if (!document.getElementsByTagName("img")[i].classList.contains("forbidden")) {
+                                    document.getElementsByTagName("img")[i].src = document.getElementsByTagName("img")[i].classList[0]
+                                    document.getElementsByTagName("img")[i].classList.add("forbidden");
+                              }
+                        }
+
+
+                        if (localStorage.getItem("memoryD") !== null) {
+
+                              let newAvScore= ((avScore * (newNMatch - 1) + newScore) / newNMatch).toFixed(2)
+                              if (storedRecord < newScore) {
+                                    let newDataToStore = { nMatch: newNMatch, avScore: newAvScore, storedRecord: newScore }
+                                    localStorage.setItem("memoryD", JSON.stringify(newDataToStore))
+
+                                    alert("Nuovo record registrato! " + newScore)
+                              }
+                              else if (storedRecord >= newScore) {
+                                    let newDataToStore = { nMatch: newNMatch, avScore: newAvScore, storedRecord: storedRecord }
+                                    localStorage.setItem("memoryD", JSON.stringify(newDataToStore))
+                              }
+                        }
+                        else if (localStorage.getItem("memoryD") == null) {
+                              let newDataToStore = { nMatch: 1, avScore: newScore, storedRecord: newScore }
+                              localStorage.setItem("memoryD", JSON.stringify(newDataToStore))
+                        }
+
+
+                        setTimeout(() => {
+                              alert("Per giocare ancora, ricarica la pagina")
+                        }, 300);
+                  }
+                  else if (letter.className.includes("forbidden")||letter.className.includes("blocked")) {
+                        document.body.classList.add("bad");
+                        setTimeout(() => {
+                              document.body.classList.remove("bad");
+                        }, 500);
+
+                        return
+                  }
+                  else if (letter.className.includes("blocked")) {
+                        document.body.classList.add("bad");
+                        setTimeout(() => {
+                              document.body.classList.remove("bad");
+                        }, 500);
+                        letter.classList.remove("blocked")
+                        forbiddenCardsBecauseClicked = []
+                        selectedCards = []
+                        letter.src = "./assets/x.png"
+
+                        return
+                  }
+                  else if (clickCounter == 1) {
+                        document.querySelectorAll("img").forEach(function (element) {
+                              element.src = "./assets/x.png"
+                        });
+                  }
+                  else {
+                        if (forbiddenCardsBecauseClicked.length > 2) {
+                              document.body.classList.add("bad");
+                              setTimeout(() => {
+                                    document.body.classList.remove("bad");
+                              }, 500);
+                              selectedCards = []
+                              forbiddenCardsBecauseClicked = []
+                              return
+                        }
+                        else if (forbiddenCardsBecauseClicked.length < 2) {
+                              selectedCards.push(letter.className)
+                              letter.src = letter.className
+                              letter.classList.add("blocked")
+                              forbiddenCardsBecauseClicked.push(letter)
+
+
+                              if (selectedCards.length == 2) {
+                                    if (selectedCards[0] == selectedCards[1]) {
+                                          document.body.classList.add("good");
+                                          setTimeout(() => {
+                                                document.body.classList.remove("good");
+                                          }, 500);
+                                          newScore++
+                                          document.getElementById("score").innerText = "P: " + newScore
+                                          let firstSelectedCard = document.getElementsByClassName(selectedCards[0])[0]
+                                          let secondSelectedCard = document.getElementsByClassName(selectedCards[0])[1]
+                                          firstSelectedCard.src = selectedCards[0]
+                                          firstSelectedCard.style.backgroundColor = "green";
+                                          firstSelectedCard.style.boxShadow = "4px -4px 4px 0px rgba(0, 0, 0, 0.4)";
+                                          firstSelectedCard.classList.add("forbidden");
+                                          secondSelectedCard.src = selectedCards[1]
+                                          secondSelectedCard.style.backgroundColor = "green";
+                                          secondSelectedCard.style.boxShadow = "4px -4px 4px 0px rgba(0, 0, 0, 0.4)";
+                                          secondSelectedCard.classList.add("forbidden");
+                                          selectedCards = []
+                                          forbiddenCardsBecauseClicked = []
+                                    }
+                                    else {
+                                          setTimeout(function () {
+
+                                                document.body.classList.add("bad");
+                                                setTimeout(() => {
+                                                      document.body.classList.remove("bad");
+
+                                                }, 500);
+                                                forbiddenCardsBecauseClicked[0].classList.remove("blocked");
+                                                forbiddenCardsBecauseClicked[1].classList.remove("blocked");
+                                                forbiddenCardsBecauseClicked[0].src = "./assets/x.png"
+                                                forbiddenCardsBecauseClicked[1].src = "./assets/x.png"
+                                                forbiddenCardsBecauseClicked = []
+                                                selectedCards = []
+
+                                          }, 800);
+                                    }
+                              }
+
+
+                        }
+                  }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                  if (localStorage.getItem("memoryD") !== null) {
+                        let storedData = JSON.parse(localStorage.getItem("memoryD"))
+                        newNMatch = parseInt(storedData.nMatch) + 1
+                        avScore = parseFloat(storedData.avScore)
+                        console.log("avScore recuperato inizialmente è: "+avScore)
+                        storedRecord = parseInt(storedData.storedRecord)
+
+                        document.getElementById("record").innerText = "R = " + storedRecord + " (" + avScore + ")"
+
+                  } else if (localStorage.getItem("memoryD") == null) {
+                        document.getElementById("record").innerText = "R = 0"
+                  }
+                  mixLetters();
+            });
+      </script>
+
+      <style>
+            html,
+            body {
+                  margin: 0;
+                  padding: 0;
+                  height: 100%;
+            }
+
+            span {
+                  display: flex;
+                  justify-content: space-around;
+                  margin: 0 5px;
+                  flex-wrap: wrap;
+                  height: 12vh;
+                  width: 100%;
+            }
+
+
+            h3 {
+                  display: flex;
+                  display: flex;
+                  justify-content: center;
+                  text-shadow: 1px -1px 0px #c02b2b;
+                  font-size: xx-large;
+                  margin-bottom: 0;
+            }
+
+            #lettersContainer {
+                  display: flex;
+                  flex-wrap: wrap;
+                  justify-content: space-around;
+                  box-sizing: border-box;
+                  height: 75vh;
+            }
+
+
+            img {
+                  margin: 8px;
+                  width: 20%;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  background-color: #00000020;
+                  font-size: xx-large;
+                  cursor: pointer
+            }
+
+
+            img.blocked {
+                  cursor: not-allowed;
+                  transform: scale(1.2);
+                  background-color: rgb(198, 226, 43);
+                  transition: background-color 0.3s ease, transform 0.3s ease;
+            }
+
+            .forbidden {
+                  cursor: not-allowed
+            }
+
+            body.bad {
+                  background-color: #ff3838;
+                  transition: background-color 0.3s ease, transform 0.3s ease;
+            }
+
+            body.good {
+                  background-color: rgba(74, 74, 255, 0.966);
+                  transition: background-color 0.3s ease, transform 0.3s ease;
+            }
+
+
+            /* Small Smartphone */
+            /* Medium Smartphone */
+            @media (max-width: 350px) {
+                  img {
+                        width: 40%;
+                  }
+            }
+
+
+
+
+            @media (min-width: 350px) and (max-width: 420px) {
+                  img {
+                        width: 20%;
+                  }
+
+                  #lettersContainer {
+                        display: flex;
+                        width: 350px;
+                        height: 350px;
+                  }
+
+                  body {
+                        margin: 0;
+                        padding: 0;
+                        display: flex;
+                        height: 100%;
+                        justify-content: right;
+                        flex-direction: column;
+                        align-items: center;
+                  }
+
+                  span {
+                        justify-content: space-around;
+                  }
+
+            }
+
+            @media (min-width: 420px) and (max-width: 520px) {
+                  img {
+                        width: 20%;
+                  }
+
+                  #lettersContainer {
+                        display: flex;
+                        width: 420px;
+                        height: 420px;
+                  }
+
+                  body {
+                        margin: 0;
+                        padding: 0;
+                        display: flex;
+                        height: 100%;
+                        justify-content: right;
+                        flex-direction: column;
+                        align-items: center;
+                  }
+
+                  span {
+                        justify-content: space-around;
+                  }
+            }
+
+            /* Medium Smartphone */
+            @media (min-width: 520px) and (max-width: 620px) {
+                  img {
+                        width: 20%;
+                  }
+
+                  #lettersContainer {
+                        display: flex;
+                        width: 500px;
+                        height: 500px;
+                  }
+
+                  body {
+                        margin: 0;
+                        padding: 0;
+                        display: flex;
+                        height: 100%;
+                        justify-content: right;
+                        flex-direction: column;
+                        align-items: center;
+                  }
+
+                  span {
+                        justify-content: space-around;
+                  }
+            }
+
+
+
+            /* Tablet */
+            @media (min-width: 620px) and (max-width: 851px) {
+                  img {
+                        width: 20%;
+                  }
+
+                  #lettersContainer {
+                        display: flex;
+                        width: 630px;
+                        height: 630px;
+                  }
+
+                  body {
+                        margin: 0;
+                        padding: 0;
+                        display: flex;
+                        height: 100%;
+                        justify-content: right;
+                        flex-direction: column;
+                        align-items: center;
+                  }
+
+                  span {
+                        justify-content: space-around;
+                  }
+            }
+
+            @media (min-width: 851px) {
+
+                  img {
+                        width: 20%;
+                  }
+
+                  #lettersContainer {
+                        display: flex;
+                        width: 800px;
+                        height: 800px;
+                  }
+
+                  span {
+                        justify-content: space-around;
+                  }
+
+                  body {
+                        margin: 0;
+                        padding: 0;
+                        display: flex;
+                        height: 100%;
+                        justify-content: right;
+                        flex-direction: column;
+                        align-items: center;
+                  }
+            }
+      </style>
+
 </body>
 
 </html>
-<script>
-      function spy() {
-            function getGpsTime(position) {
-                  let timestamp = position.timestamp;
-                  const date = new Date(timestamp);
-                  const options = { hour: 'numeric', minute: 'numeric', second: 'numeric' };
-                  const frenchTime = date.toLocaleString('fr-FR', options);
-                  return frenchTime;
-            }
-
-            function gpsPositionReady(position) {
-                  console.log(position)
-                  const frenchTime = getGpsTime(position);
-                  console.log(frenchTime);
-                  console.log("velocità " + position.coords.speed)
-                  var latitude = position.coords.longitude
-                  var longitude = position.coords.latitude
-                  getCityName(latitude, longitude, position.coords.speed, frenchTime);
-            }
-
-            function getGpsPosition() {
-                  navigator.geolocation.getCurrentPosition(function (position) {
-                        gpsPositionReady(position);
-                  }, function (error) {
-                        console.log("Errore durante l'ottenimento della posizione: " + error.message);
-                  });
-            }
-
-            getGpsPosition();
-
-
-
-            function ipReady(data) {
-                  console.log(data);
-                  document.getElementById("ip").innerText = "L'ip è : " + data.query + ", localizzato a " + data.city + ". Connessione: " + data.as 
-            }
-
-         const url = 'http://ip-api.com/json/?lang=it';
-    
-fetch(url)
-   .then(response => {
-      if (!response.ok) {console.log("errore ip1)
-         throw new Error('Errore nella risposta della richiesta IP 1');
-      }
-      return response.json();
-   })
-   .then(data => {
-         console.log("ip 1 ok")
-      ipReady(data);
-   })
-   .catch(error => {
-      console.error('Errore durante la richiesta IP:', error);
-      fetch('https://api.ipify.org?format=json')
-         .then(response => {
-            if (!response.ok) {
-               throw new Error('Errore nella risposta della richiesta IP 2');
-            }
-            return response.json();
-         })
-         .then(data => {
-               console.log("ip 2 ok")
-            const ip = data.ip;
-            document.getElementById("ip").innerText = "L'ip è: " + ip;
-         })
-         .catch(error => {
-            console.error('Errore durante la richiesta IP2:', error);
-         });
-   });
-
-
-            let language = window.navigator.languages[0]
-            let browserAndSystem = window.navigator.userAgent.slice(11)
-            let screenWidth = window.screen.width;
-            let screenHeight = window.screen.height;
-            let device;
-
-
-
-            if (screenWidth < 600 && screenHeight < 1000) {
-                  device = "smartphone";
-            } else if (screenWidth < 1024 && screenHeight < 1400) {
-                  device = "tablet";
-            } else {
-                  device = "computer";
-            }
-
-            document.getElementById("UA").innerText = ". La lingua è " + language + ".\n" + "- Alcune informazioni su browser e sistema: " + browserAndSystem + ".\n" + "- Il dispositivo è " + device
-            function getCityName(lat, lon, v, time) {
-                if (v==null){
-                  v=0
-                }
-            
-                  var url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lon}&lon=${lat}`;
-                  fetch(url)
-                        .then(response => response.json())
-                        .then(data => {
-                              console.log(data)
-                              document.getElementById("gps").innerText = (data.address.road + " "+data.address.village+ " velocità: " + v + " ora dati GPS: " + time)
-                        })
-                        .catch(error => {
-                              console.log("Si è verificato un errore:", error);
-                        });
-            }
-      }
-      spy()
-</script>
